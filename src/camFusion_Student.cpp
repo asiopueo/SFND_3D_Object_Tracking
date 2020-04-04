@@ -130,10 +130,18 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 }
 
 
-// associate a given bounding box with the keypoints it contains
+// Associate the given bounding box with the Keypoint MATCHES it contains:
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    /*for (auto it = kptMatches.begin(); it!=kptMatches.end(); ++it)
+    {
+        // TODO
+        if ( boundingBox.roi.contains(it->pt) )
+        {
+            boundingBox.keypoints.push_back(*it);
+        }
+    }*/
+    
 }
 
 
@@ -145,10 +153,27 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 }
 
 
-void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    // auxiliary variables
+    double dT = 1.0 / frameRate;    // time between frames in seconds
+    double laneWidth = 4.0;         // assumed width of the ego lane
+
+    // find closest distance to Lidar points within ego lane
+    double minXPrev = 1e9, minXCurr = 1e9;
+    for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
+    {
+        std::cout << it->y << std::endl;
+        minXPrev = minXPrev > it->x ? it->x : minXPrev;
+    }
+
+    for (auto it = lidarPointsCurr.begin(); it != lidarPointsCurr.end(); ++it)
+    {
+        minXCurr = minXCurr > it->x ? it->x : minXCurr;
+    }
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev - minXCurr);
 }
 
 
