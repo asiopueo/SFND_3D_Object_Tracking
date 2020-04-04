@@ -242,7 +242,9 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
 }
 
 
-void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
+//void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
+void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
 {
-    // ...
+    // Q: Why are maches supported as an additional argument, when they are already contained in the DataFrames?
+
 }
