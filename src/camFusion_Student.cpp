@@ -262,46 +262,23 @@ void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int
 
     for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
     {
-        for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB)
-            std::cout << occupancy.at<int>(currBB->boxID, prevBB->boxID) << " , ";    
-        
+        int maxRow = 0;
+        int maxRowID;
+        for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB) {
+            std::cout << occupancy.at<int>(currBB->boxID, prevBB->boxID) << " , ";
+            int currentEntry = occupancy.at<int>(currBB->boxID, prevBB->boxID);
+            if (currentEntry > maxRow) {
+                maxRow = currentEntry;
+                maxRowID = prevBB->boxID;
+            }
+        }           
+
+        bbBestMatches.insert({currBB->boxID, maxRowID});
         std::cout << std::endl;
     }
 
-    
+    std::cout << "\n";
+    for (auto it=bbBestMatches.begin(); it!=bbBestMatches.end(); ++it)
+        std::cout << it->first << " , " << it->second << std::endl;
+
 }
-
-
-/*void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
-{
-    // Q: Why are maches supported as an additional argument, when they are already contained in the DataFrames?
-    // We assume that DataFrames 
-    
-    std::multimap<int, int> matchCandidates;
-
-    for (auto match=currFrame.kptMatches.begin(); match!=currFrame.kptMatches.end(); ++match) 
-    {
-        cv::KeyPoint currKp = currFrame.keypoints.at(match->trainIdx);
-        cv::KeyPoint prevKp = prevFrame.keypoints.at(match->queryIdx);
-
-        for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
-        {
-            for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB)
-            {
-                if ( currBB->roi.contains(currKp.pt) && prevBB->roi.contains(prevKp.pt) )
-                    matchCandidates.insert( pair<int, int>(currBB->boxID, prevBB->boxID) );
-            }
-
-        }
-    }
-
-    // Aggregate appearances in multimap:
-    //for (auto it=matchCandidates.begin(); it!=matchCandidates.end(); ++it)
-    //    std::cout << it->first << "\t" << it->second << std::endl;
-
-    for (auto it=currFrame.boundingBoxes.begin(); it!=currFrame.boundingBoxes.end(); ++it) {
-        auto range = matchCandidates.equal_range(it->boxID);
-        for (auto it2=range.first; it2!=range.second; ++it2)
-            std::cout << it2->first << "\t" << it2->second << std::endl;
-    }
-}*/
