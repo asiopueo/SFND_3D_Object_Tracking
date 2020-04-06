@@ -4,9 +4,11 @@
 #include <numeric>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <map>
 
 #include "camFusion.hpp"
 #include "dataStructures.h"
+
 
 using namespace std;
 
@@ -242,9 +244,64 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
 }
 
 
-//void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
 {
-    // Q: Why are maches supported as an additional argument, when they are already contained in the DataFrames?
+    cv::Mat occupancy = cv::Mat::zeros(currFrame.boundingBoxes.size(), prevFrame.boundingBoxes.size(), cv::DataType<int>::type);
+    std::cout << occupancy.size << std::endl;
 
+    for (auto match=currFrame.kptMatches.begin(); match!=currFrame.kptMatches.end(); ++match) 
+    {
+        cv::KeyPoint currKp = currFrame.keypoints.at(match->trainIdx);
+        cv::KeyPoint prevKp = prevFrame.keypoints.at(match->queryIdx);
+
+        for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
+            for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB)
+                if ( currBB->roi.contains(currKp.pt) && prevBB->roi.contains(prevKp.pt) )
+                    occupancy.at<int>(currBB->boxID, prevBB->boxID) += 1;
+    }
+
+    for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
+    {
+        for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB)
+            std::cout << occupancy.at<int>(currBB->boxID, prevBB->boxID) << " , ";    
+        
+        std::cout << std::endl;
+    }
+
+    
 }
+
+
+/*void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
+{
+    // Q: Why are maches supported as an additional argument, when they are already contained in the DataFrames?
+    // We assume that DataFrames 
+    
+    std::multimap<int, int> matchCandidates;
+
+    for (auto match=currFrame.kptMatches.begin(); match!=currFrame.kptMatches.end(); ++match) 
+    {
+        cv::KeyPoint currKp = currFrame.keypoints.at(match->trainIdx);
+        cv::KeyPoint prevKp = prevFrame.keypoints.at(match->queryIdx);
+
+        for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
+        {
+            for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB)
+            {
+                if ( currBB->roi.contains(currKp.pt) && prevBB->roi.contains(prevKp.pt) )
+                    matchCandidates.insert( pair<int, int>(currBB->boxID, prevBB->boxID) );
+            }
+
+        }
+    }
+
+    // Aggregate appearances in multimap:
+    //for (auto it=matchCandidates.begin(); it!=matchCandidates.end(); ++it)
+    //    std::cout << it->first << "\t" << it->second << std::endl;
+
+    for (auto it=currFrame.boundingBoxes.begin(); it!=currFrame.boundingBoxes.end(); ++it) {
+        auto range = matchCandidates.equal_range(it->boxID);
+        for (auto it2=range.first; it2!=range.second; ++it2)
+            std::cout << it2->first << "\t" << it2->second << std::endl;
+    }
+}*/
