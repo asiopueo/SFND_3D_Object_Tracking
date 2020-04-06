@@ -133,17 +133,17 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
 
 // Associate the given bounding box with the Keypoint MATCHES it contains:
+// Note: BoundingBox refers to the current image
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    /*for (auto it = kptMatches.begin(); it!=kptMatches.end(); ++it)
-    {
-        // TODO
-        if ( boundingBox.roi.contains(it->pt) )
-        {
-            boundingBox.keypoints.push_back(*it);
-        }
-    }*/
-    
+    for (auto match = kptMatches.begin(); match!=kptMatches.end(); ++match) {
+        cv::KeyPoint kptCurr = kptsCurr.at(match->trainIdx);
+        cv::KeyPoint kptPrev = kptsPrev.at(match->queryIdx);
+
+        // Here we assume that the key points from the current and previous images must both be contained within the *current* bounding box.
+        if ( boundingBox.roi.contains(kptCurr.pt) && boundingBox.roi.contains(kptPrev.pt))
+            boundingBox.kptMatches.push_back(*match);
+    }
 }
 
 
