@@ -199,19 +199,15 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     double medianDistRatio;
     size_t size = distRatios.size();
 
-    if(size == 0)
-    {
+    if(size == 0) {
         medianDistRatio = 0;
     }
-    else
-    {
-        if (size % 2 == 0)
-        {
+    else {
+        if (size % 2 == 0) {
             std::sort(distRatios.begin(), distRatios.end());
             meanDistRatio = (distRatios[size/2-1] + distRatios[size/2])/2;
         }
-        else
-        {
+        else {
             medianDistRatio = distRatios[size/2];
         }
     }
@@ -230,14 +226,17 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
     double minXPrev = 1e9, minXCurr = 1e9;
     for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
     {
-        std::cout << it->y << std::endl;
+        //std::cout << it->y << std::endl;
         minXPrev = minXPrev > it->x ? it->x : minXPrev;
     }
+    std::cout << minXPrev << std::endl;
+
 
     for (auto it = lidarPointsCurr.begin(); it != lidarPointsCurr.end(); ++it)
     {
         minXCurr = minXCurr > it->x ? it->x : minXCurr;
     }
+    std::cout << minXCurr << std::endl;
 
     // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev - minXCurr);
@@ -247,8 +246,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
 void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
 {
     cv::Mat occupancy = cv::Mat::zeros(currFrame.boundingBoxes.size(), prevFrame.boundingBoxes.size(), cv::DataType<int>::type);
-    std::cout << occupancy.size << std::endl;
 
+    // Setting the values of the occpupancy matrix
     for (auto match=currFrame.kptMatches.begin(); match!=currFrame.kptMatches.end(); ++match) 
     {
         cv::KeyPoint currKp = currFrame.keypoints.at(match->trainIdx);
@@ -260,12 +259,12 @@ void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int
                     occupancy.at<int>(currBB->boxID, prevBB->boxID) += 1;
     }
 
+    // Determining the max value for each row and setting the values for bbBestMatches:
     for (auto currBB=currFrame.boundingBoxes.begin(); currBB!=currFrame.boundingBoxes.end(); ++currBB)
     {
         int maxRow = 0;
         int maxRowID;
         for (auto prevBB=prevFrame.boundingBoxes.begin(); prevBB!=prevFrame.boundingBoxes.end(); ++prevBB) {
-            std::cout << occupancy.at<int>(currBB->boxID, prevBB->boxID) << " , ";
             int currentEntry = occupancy.at<int>(currBB->boxID, prevBB->boxID);
             if (currentEntry > maxRow) {
                 maxRow = currentEntry;
@@ -274,11 +273,5 @@ void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int
         }           
 
         bbBestMatches.insert({currBB->boxID, maxRowID});
-        std::cout << std::endl;
     }
-
-    std::cout << "\n";
-    for (auto it=bbBestMatches.begin(); it!=bbBestMatches.end(); ++it)
-        std::cout << it->first << " , " << it->second << std::endl;
-
 }
