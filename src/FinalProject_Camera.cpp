@@ -117,13 +117,6 @@ int main(int argc, const char *argv[])
 
 
             // Original loop starts here:
-
-
-
-
-
-
-
             for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
             {
                 /* LOAD IMAGE INTO BUFFER */
@@ -203,11 +196,21 @@ int main(int argc, const char *argv[])
 
                 if (detectorType.compare("SHITOMASI") == 0)
                 {
-                    detKeypointsShiTomasi(keypoints, imgGray, false);
+                    detKeypointsShiTomasi(keypoints, imgGray, detectorTimes, bVis);
+                }
+                else if (detectorType.compare("HARRIS") == 0)
+                {
+                    detKeypointsHarris(keypoints, imgGray, detectorTimes, bVis);
+                }
+                else if (detectorType.compare("FAST") == 0 || detectorType.compare("BRISK") == 0 || detectorType.compare("ORB") == 0 || 
+                            detectorType.compare("AKAZE") == 0 || detectorType.compare("SIFT") == 0)
+                {
+                    detKeypointsModern(keypoints, imgGray, detectorType, detectorTimes, bVis);
                 }
                 else
                 {
-                    //...
+                    cerr << "Unknown detector type " << detectorType << ". Abort." << endl;
+                    return 1;
                 }
 
                 // optional : limit number of keypoints (helpful for debugging and learning)
