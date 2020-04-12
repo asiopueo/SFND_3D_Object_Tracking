@@ -80,8 +80,8 @@ int main(int argc, const char *argv[])
     // Define detector/descriptor type vectors for automated testing:
     vector<string> detectors, descriptors;
     //detectors.push_back("SIFT");
-    detectors.push_back("HARRIS");
-    detectors.push_back("SHITOMASI");
+    //detectors.push_back("HARRIS");
+    //detectors.push_back("SHITOMASI");
     detectors.push_back("FAST");    // Detector only
     detectors.push_back("BRISK");
     detectors.push_back("ORB");
@@ -95,7 +95,9 @@ int main(int argc, const char *argv[])
     descriptors.push_back("AKAZE"); // Only works with AKAZE keypoints
 
 
+    bool verbose = false; // Set to true if log messages like "#2 DETECT & CLASSIFY OBJECTS done" are wanted
 
+ 
     for (string detectorType : detectors) {
         for (string descriptorType : descriptors) {
 
@@ -120,6 +122,7 @@ int main(int argc, const char *argv[])
             for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
             {
                 /* LOAD IMAGE INTO BUFFER */
+                cout << "Image " << imgIndex << endl;
 
                 // assemble filenames for current index
                 ostringstream imgNumber;
@@ -134,7 +137,7 @@ int main(int argc, const char *argv[])
                 frame.cameraImg = img;
                 dataBuffer.push_back(frame);
 
-                cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
+                if (verbose) cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
 
 
                 /* DETECT & CLASSIFY OBJECTS */
@@ -144,7 +147,7 @@ int main(int argc, const char *argv[])
                 detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                             yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
 
-                cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
+                if (verbose) cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
 
 
                 /* CROP LIDAR POINTS */
@@ -160,7 +163,7 @@ int main(int argc, const char *argv[])
             
                 (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
 
-                cout << "#3 : CROP LIDAR POINTS done" << endl;
+                if (verbose) cout << "#3 : CROP LIDAR POINTS done" << endl;
 
 
                 /* CLUSTER LIDAR POINT CLOUD */
@@ -178,7 +181,7 @@ int main(int argc, const char *argv[])
                 }
                 bVis = false;
 
-                cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
+                if (verbose) cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
                 
                 
                 // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
@@ -192,20 +195,20 @@ int main(int argc, const char *argv[])
 
                 // extract 2D keypoints from current image
                 vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-                string detectorType = "SHITOMASI";
+                //string detectorType = "SHITOMASI";
 
                 if (detectorType.compare("SHITOMASI") == 0)
                 {
-                    detKeypointsShiTomasi(keypoints, imgGray, detectorTimes, bVis);
+                    detKeypointsShiTomasi(keypoints, imgGray, bVis);
                 }
                 else if (detectorType.compare("HARRIS") == 0)
                 {
-                    detKeypointsHarris(keypoints, imgGray, detectorTimes, bVis);
+                    detKeypointsHarris(keypoints, imgGray, bVis);
                 }
                 else if (detectorType.compare("FAST") == 0 || detectorType.compare("BRISK") == 0 || detectorType.compare("ORB") == 0 || 
                             detectorType.compare("AKAZE") == 0 || detectorType.compare("SIFT") == 0)
                 {
-                    detKeypointsModern(keypoints, imgGray, detectorType, detectorTimes, bVis);
+                    detKeypointsModern(keypoints, imgGray, detectorType, bVis);
                 }
                 else
                 {
@@ -230,19 +233,19 @@ int main(int argc, const char *argv[])
                 // push keypoints and descriptor for current frame to end of data buffer
                 (dataBuffer.end() - 1)->keypoints = keypoints;
 
-                cout << "#5 : DETECT KEYPOINTS done" << endl;
+                if (verbose) cout << "#5 : DETECT KEYPOINTS done" << endl;
 
 
                 /* EXTRACT KEYPOINT DESCRIPTORS */
 
                 cv::Mat descriptors;
-                string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+                //string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
                 descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
 
                 // push descriptors for current frame to end of data buffer
                 (dataBuffer.end() - 1)->descriptors = descriptors;
 
-                cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
+                if (verbose) cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
 
 
                 if (dataBuffer.size() > 1) // wait until at least two images have been processed
@@ -262,7 +265,7 @@ int main(int argc, const char *argv[])
                     // store matches in current data frame
                     (dataBuffer.end() - 1)->kptMatches = matches;
 
-                    cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
+                    if (verbose) cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
                     
                     /* TRACK 3D OBJECT BOUNDING BOXES */
@@ -276,7 +279,8 @@ int main(int argc, const char *argv[])
                     // store matches in current data frame
                     (dataBuffer.end()-1)->bbMatches = bbBestMatches;
 
-                    cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
+
+                    if (verbose) cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
 
 
                     /* COMPUTE TTC ON OBJECT IN FRONT */
@@ -301,7 +305,11 @@ int main(int argc, const char *argv[])
                                 prevBB = &(*it2);
                             }
                         }
+                        
+                        
+                        //cout << (currBB->lidarPoints.size()!=0) << " && " << (prevBB->lidarPoints.size()!=0) << endl;
 
+                        
                         // compute TTC for current match
                         if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
                         {
@@ -323,11 +331,13 @@ int main(int argc, const char *argv[])
                             
                             //// EOF STUDENT ASSIGNMENT
 
-                            bVis = true;
+                            bVis = false;
                             if (bVis)
                             {
                                 cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
                                 showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
+                                // Uncomment to check that the bounding boxes are indeed good (best) matches:
+                                //cv::rectangle(visImg, cv::Point(prevBB->roi.x, prevBB->roi.y), cv::Point(prevBB->roi.x + prevBB->roi.width, prevBB->roi.y + prevBB->roi.height), cv::Scalar(0, 0, 255), 2);
                                 cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
                                 
                                 char str[200];
@@ -344,12 +354,9 @@ int main(int argc, const char *argv[])
 
                         } // eof TTC computation
                     } // eof loop over all BB matches            
-
                 }
 
             } // eof loop over all images
-
-            return 0;
         } // eof loop descriptor type
     } // eof loop detector type
 }
