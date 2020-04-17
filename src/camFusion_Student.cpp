@@ -246,8 +246,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
     double minXPrev = minVal(lidarPointsPrev);
     double minXCurr = minVal(lidarPointsCurr);
 
-    std::cout << minXPrev << std::endl;
-    std::cout << minXCurr << std::endl;
+    //std::cout << "minXPrev: " << minXPrev << std::endl;
+    //std::cout << "minXCurr: " << minXCurr << std::endl;
 
     // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev - minXCurr);
@@ -281,7 +281,9 @@ void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int
                 maxRowID = prevBB->boxID;
             }
         }           
-
-        bbBestMatches.insert({currBB->boxID, maxRowID});
+        bbBestMatches.insert({maxRowID, currBB->boxID});
     }
+
+    /*for (auto it=bbBestMatches.begin(); it!=bbBestMatches.end(); ++it)
+        cout << it->first << "\t" << it->second <<endl;*/
 }
