@@ -82,21 +82,21 @@ int main(int argc, const char *argv[])
     //detectors.push_back("SIFT");
     //detectors.push_back("HARRIS");
     //detectors.push_back("SHITOMASI");
-    detectors.push_back("FAST");    // Detector only
-    detectors.push_back("BRISK");
+    //detectors.push_back("FAST");    // Detector only
+    //detectors.push_back("BRISK");
     detectors.push_back("ORB");
-    detectors.push_back("AKAZE");  
+    //detectors.push_back("AKAZE");  
     
     //descriptors.push_back("SIFT");
-    descriptors.push_back("BRISK");
-    descriptors.push_back("BRIEF");
+    //descriptors.push_back("BRISK");
+    //descriptors.push_back("BRIEF");
     descriptors.push_back("ORB"); // Does not work with SIFT detector
     descriptors.push_back("FREAK");
-    descriptors.push_back("AKAZE"); // Only works with AKAZE keypoints
+    //descriptors.push_back("AKAZE"); // Only works with AKAZE keypoints
 
 
     bool verbose = false; // Set to true if log messages like "#2 DETECT & CLASSIFY OBJECTS done" are wanted
-    bool exportFlag = true; // Set to true if outport shall be copy&pasted from console to spreadsheet
+    bool exportFlag = false; // Set to true if outport shall be copy&pasted from console to spreadsheet
  
     for (string detectorType : detectors) {
         for (string descriptorType : descriptors) {
@@ -122,7 +122,7 @@ int main(int argc, const char *argv[])
             for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
             {
                 /* LOAD IMAGE INTO BUFFER */
-                //std::cout << "Image " << imgIndex << std::endl;
+                if (!exportFlag) std::cout << "Image " << imgIndex << std::endl;
 
                 // assemble filenames for current index
                 ostringstream imgNumber;
