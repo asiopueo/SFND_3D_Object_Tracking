@@ -96,7 +96,7 @@ int main(int argc, const char *argv[])
 
 
     bool verbose = false; // Set to true if log messages like "#2 DETECT & CLASSIFY OBJECTS done" are wanted
-
+    bool exportFlag = true; // Set to true if outport shall be copy&pasted from console to spreadsheet
  
     for (string detectorType : detectors) {
         for (string descriptorType : descriptors) {
@@ -112,17 +112,17 @@ int main(int argc, const char *argv[])
             dataBuffer.clear(); 
 
 
-            std::cout   << "***************************************" << endl
-                        << "Detector: " << detectorType << endl 
-                        << "Descriptor: " << descriptorType << endl
-                        << "***************************************" << endl;
+            std::cout   << "***************************************" << std::endl
+                        << "Detector: " << detectorType << std::endl 
+                        << "Descriptor: " << descriptorType << std::endl
+                        << "***************************************" << std::endl;
 
 
             // Original loop starts here:
             for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
             {
                 /* LOAD IMAGE INTO BUFFER */
-                cout << "Image " << imgIndex << endl;
+                //std::cout << "Image " << imgIndex << std::endl;
 
                 // assemble filenames for current index
                 ostringstream imgNumber;
@@ -137,7 +137,7 @@ int main(int argc, const char *argv[])
                 frame.cameraImg = img;
                 dataBuffer.push_back(frame);
 
-                if (verbose) cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
+                if (verbose) std::cout << "#1 : LOAD IMAGE INTO BUFFER done" << std::endl;
 
 
                 /* DETECT & CLASSIFY OBJECTS */
@@ -147,7 +147,7 @@ int main(int argc, const char *argv[])
                 detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                             yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
 
-                if (verbose) cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
+                if (verbose) std::cout << "#2 : DETECT & CLASSIFY OBJECTS done" << std::endl;
 
 
                 /* CROP LIDAR POINTS */
@@ -163,7 +163,7 @@ int main(int argc, const char *argv[])
             
                 (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
 
-                if (verbose) cout << "#3 : CROP LIDAR POINTS done" << endl;
+                if (verbose) std::cout << "#3 : CROP LIDAR POINTS done" << std::endl;
 
 
                 /* CLUSTER LIDAR POINT CLOUD */
@@ -181,7 +181,7 @@ int main(int argc, const char *argv[])
                 }
                 bVis = false;
 
-                if (verbose) cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
+                if (verbose) std::cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << std::endl;
                 
                 
                 // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
@@ -212,7 +212,7 @@ int main(int argc, const char *argv[])
                 }
                 else
                 {
-                    cerr << "Unknown detector type " << detectorType << ". Abort." << endl;
+                    cerr << "Unknown detector type " << detectorType << ". Abort." << std::endl;
                     return 1;
                 }
 
@@ -227,13 +227,13 @@ int main(int argc, const char *argv[])
                         keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
                     }
                     cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
-                    cout << " NOTE: Keypoints have been limited!" << endl;
+                    std::cout << " NOTE: Keypoints have been limited!" << std::endl;
                 }
 
                 // push keypoints and descriptor for current frame to end of data buffer
                 (dataBuffer.end() - 1)->keypoints = keypoints;
 
-                if (verbose) cout << "#5 : DETECT KEYPOINTS done" << endl;
+                if (verbose) std::cout << "#5 : DETECT KEYPOINTS done" << std::endl;
 
 
                 /* EXTRACT KEYPOINT DESCRIPTORS */
@@ -245,7 +245,7 @@ int main(int argc, const char *argv[])
                 // push descriptors for current frame to end of data buffer
                 (dataBuffer.end() - 1)->descriptors = descriptors;
 
-                if (verbose) cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
+                if (verbose) std::cout << "#6 : EXTRACT DESCRIPTORS done" << std::endl;
 
 
                 if (dataBuffer.size() > 1) // wait until at least two images have been processed
@@ -265,7 +265,7 @@ int main(int argc, const char *argv[])
                     // store matches in current data frame
                     (dataBuffer.end() - 1)->kptMatches = matches;
 
-                    if (verbose) cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
+                    if (verbose) std::cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << std::endl;
 
                     
                     /* TRACK 3D OBJECT BOUNDING BOXES */
@@ -280,7 +280,7 @@ int main(int argc, const char *argv[])
                     (dataBuffer.end()-1)->bbMatches = bbBestMatches;
 
 
-                    if (verbose) cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
+                    if (verbose) std::cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << std::endl;
 
 
                     /* COMPUTE TTC ON OBJECT IN FRONT */
@@ -307,17 +307,17 @@ int main(int argc, const char *argv[])
                         }
                         
                         
-                        //cout << (currBB->lidarPoints.size()!=0) << " && " << (prevBB->lidarPoints.size()!=0) << endl;
+                        //std::cout << (currBB->lidarPoints.size()) << " && " << (prevBB->lidarPoints.size()) << std::endl;
 
-                        
                         // compute TTC for current match
                         if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
                         {
                             //// STUDENT ASSIGNMENT
                             //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
+                            
                             double ttcLidar; 
                             computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
-                            cout << "TTC Lidar: " << ttcLidar << "s" << endl;
+                            if (!exportFlag) std::cout << "TTC Lidar: " << ttcLidar << "s" << std::endl;
                             
                             //// EOF STUDENT ASSIGNMENT
 
@@ -327,7 +327,9 @@ int main(int argc, const char *argv[])
                             double ttcCamera;
                             clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                             computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
-                            cout << "TTC Camera: " << ttcCamera << "s" << endl;
+                            
+                            if (exportFlag) std::cout << ttcCamera << " , ";
+                            else std::cout << "TTC Camera: " << ttcCamera << "s" << std::endl;
                             
                             //// EOF STUDENT ASSIGNMENT
 
@@ -347,7 +349,7 @@ int main(int argc, const char *argv[])
                                 string windowName = "Final Results : TTC";
                                 cv::namedWindow(windowName, 4);
                                 cv::imshow(windowName, visImg);
-                                cout << "Press key to continue to next frame" << endl;
+                                std::cout << "Press key to continue to next frame" << std::endl;
                                 cv::waitKey(0);
                             }
                             bVis = false;
@@ -357,6 +359,9 @@ int main(int argc, const char *argv[])
                 }
 
             } // eof loop over all images
+
+            if (exportFlag) std::cout << std::endl;
+
         } // eof loop descriptor type
     } // eof loop detector type
 }
