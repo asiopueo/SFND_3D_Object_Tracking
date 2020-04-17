@@ -219,25 +219,39 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev, std::vector<Lidar
     double laneWidth = 4.0;         // assumed width of the ego lane
 
     // find closest distance to Lidar points within ego lane
-    double minXPrev = 1e9, minXCurr = 1e9;
-    for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
-    {
-        minXPrev = minXPrev > it->x ? it->x : minXPrev;
-    }
 
+    auto minVal = [&](std::vector<LidarPoint> lidarPoints) {
+        int N = lidarPoints.size();
+        double minX = 1e9;
+        double meanX = 0;
+        double stdDevX = 0;
+        for (int i = 0; i< N; ++i) meanX += lidarPoints[i].x;
+        meanX = meanX / N;
+        
+        for (int i = 0; i<N; ++i) stdDevX += pow(lidarPoints[i].x - meanX, 2);
+        stdDevX = stdDevX / (N-1);
+        
+        /*cout << "meanX: " << meanX << endl;
+        cout << "stdDevX: " << stdDevX << endl; 
+        cout << "-2*stdDevX+meanX: " << -2*stdDevX+meanX << endl;*/
+        
+        for (int i=0; i<N; ++i)
+            minX = (-2*stdDevX+meanX < lidarPoints[i].x && lidarPoints[i].x < minX) ? lidarPoints[i].x : minX;
 
-    for (auto it = lidarPointsCurr.begin(); it != lidarPointsCurr.end(); ++it)
-    {
-        minXCurr = minXCurr > it->x ? it->x : minXCurr;
-    }
-    
-    //std::cout << minXPrev << std::endl;
-    //std::cout << minXCurr << std::endl;
+        //cout << "minX: " << minX << endl;
+        
+        return minX;
+    };
+
+    double minXPrev = minVal(lidarPointsPrev);
+    double minXCurr = minVal(lidarPointsCurr);
+
+    std::cout << minXPrev << std::endl;
+    std::cout << minXCurr << std::endl;
 
     // compute TTC from both measurements
     TTC = minXCurr * dT / (minXPrev - minXCurr);
 }
-
 
 void matchBoundingBoxes(DataFrame &prevFrame, DataFrame &currFrame, std::map<int, int> &bbBestMatches)
 {
